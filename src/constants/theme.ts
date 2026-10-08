@@ -4,10 +4,16 @@
  */
 
 import '@/global.css';
-
 import { Platform } from 'react-native';
 
 export const Colors = {
+  white: '#ffffff',
+  black: '#000000',
+  surface: '#121212',
+  primary: '#007AFF',
+  textMuted: '#8E8E93',
+  danger: '#FF3B30',
+
   light: {
     text: '#000000',
     background: '#ffffff',
@@ -23,6 +29,8 @@ export const Colors = {
     textSecondary: '#B0B4BA',
   },
 } as const;
+
+export const COLORS = Colors;
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
