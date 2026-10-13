@@ -26,11 +26,6 @@ export default function InitialLayout() {
       <Stack.Protected guard={isAuthenticated}>
         <Stack.Screen name="index" />
         <Stack.Screen name="(app)" />
-        <Stack.Screen name="explore" />
-        <Stack.Screen name="new-room" />
-        <Stack.Screen name="profile" />
-        <Stack.Screen name="chat/[id]" />
-        <Stack.Screen name="settings/[id]" />
       </Stack.Protected>
 
       <Stack.Protected guard={!isAuthenticated}>

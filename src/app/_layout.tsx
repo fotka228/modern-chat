@@ -19,17 +19,19 @@ const secureStorage = {
 
 export default function RootLayout() {
   return (
-    <SafeAreaProvider>
-      <ConvexAuthProvider
-        client={convex}
-        storage={
-          Platform.OS === "android" || Platform.OS === "ios"
-            ? secureStorage
-            : undefined
-        }
-      >
-        <InitialLayout />
-      </ConvexAuthProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <ConvexAuthProvider
+          client={convex}
+          storage={
+            Platform.OS === "android" || Platform.OS === "ios"
+              ? secureStorage
+              : undefined
+          }
+        >
+          <InitialLayout />
+        </ConvexAuthProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

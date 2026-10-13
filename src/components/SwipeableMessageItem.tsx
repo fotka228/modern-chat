@@ -23,7 +23,7 @@ export interface MessageItemData {
   _creationTime: number;
 }
 
-type Props = {
+type MessageProps = {
   item: MessageItemData;
   isOwn: boolean;
   onLongPress: () => void;
@@ -41,14 +41,14 @@ export function SwipeableMessageItem({
   onReply,
   onImagePress,
   onAuthorPress,
-}: Props) {
+}: MessageProps) {
   const translateX = useSharedValue(0);
 
   const triggerReply = () => onReply(item);
 
   const panGesture = Gesture.Pan()
-    .activeOffsetX([-10, 10])
-    .failOffsetY([-15, 15])
+    .activeOffsetX([-15, 15])
+    .failOffsetY([-5, 5]) // Зменшено поріг для коректного вертикального скролу чату
     .onUpdate((e) => {
       if (e.translationX > 0) translateX.value = Math.min(e.translationX, 80);
     })

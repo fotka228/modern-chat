@@ -5,44 +5,65 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
+  Alert,
+  Platform,
 } from "react-native";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import type { Id } from "../../../convex/_generated/dataModel";
 import { useRouter, Stack } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
-import { COLORS } from "@/constants/theme";
+import { SwipeableRoomItem } from "../../components/SwipeableRoomItem";
 
-const CARD_BG = "#1c1c1e";
-const BORDER = "#2a2a2c";
 const TEXT_MUTED = "#8e8e93";
 const ACCENT = "#0a84ff";
-const AVATAR_COLORS = ["#0a84ff", "#30d158", "#ff9f0a", "#bf5af2", "#ff453a", "#64d2ff"];
 
-function colorFor(str: string) {
-  let h = 0;
-  for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
-  return AVATAR_COLORS[h % AVATAR_COLORS.length];
-}
-
-function formatTime(ts?: number) {
-  if (!ts) return "";
-  const d = new Date(ts);
-  const now = new Date();
-  if (d.toDateString() === now.toDateString()) {
-    return d.toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" });
-  }
-  return d.toLocaleDateString("uk-UA", { day: "2-digit", month: "2-digit" });
+function notify(title: string, message: string) {
+  if (Platform.OS === "web") window.alert(`${title}\n\n${message}`);
+  else Alert.alert(title, message);
 }
 
 export default function HomeScreen() {
   const router = useRouter();
   const rooms = useQuery(api.rooms.listRooms);
+  const currentUser = useQuery(api.users.currentUser);
+  const deleteRoom = useMutation(api.rooms.deleteRoom);
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = () => {
     setRefreshing(true);
     setTimeout(() => setRefreshing(false), 500);
+  };
+
+  const runDelete = async (roomId: Id<"chatRooms">) => {
+    try {
+      await deleteRoom({ roomId });
+    } catch (e: any) {
+      notify("Помилка", e?.message || "Не вдалося видалити кімнату");
+    }
+  };
+
+  const handleDeleteRoom = (roomId: Id<"chatRooms">) => {
+    const room = rooms?.find((r) => r._id === roomId);
+    if (!room) return;
+
+    if (room.creatorId !== currentUser?._id) {
+      notify("Обмеження доступу", "Лише автор кімнати може її видалити.");
+      return;
+    }
+
+    const text = `Видалити кімнату «${room.title}» та всі її повідомлення? Цю дію неможливо скасувати.`;
+
+    if (Platform.OS === "web") {
+      if (window.confirm(text)) runDelete(roomId);
+      return;
+    }
+
+    Alert.alert("Видалити кімнату?", text, [
+      { text: "Скасувати", style: "cancel" },
+      { text: "Видалити", style: "destructive", onPress: () => runDelete(roomId) },
+    ]);
   };
 
   return (
@@ -98,82 +119,16 @@ export default function HomeScreen() {
             alignSelf: "center",
           }}
           refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor={ACCENT}
-            />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={ACCENT} />
           }
-          renderItem={({ item }) => {
-            const color = colorFor(item.title);
-            return (
-              <TouchableOpacity
-                onPress={() => router.push(`/chat/${item._id}`)}
-                activeOpacity={0.7}
-                style={{
-                  backgroundColor: CARD_BG,
-                  borderColor: BORDER,
-                  borderWidth: 1,
-                  borderRadius: 18,
-                  padding: 14,
-                  flexDirection: "row",
-                  alignItems: "center",
-                }}
-              >
-                <View
-                  style={{
-                    width: 52,
-                    height: 52,
-                    borderRadius: 26,
-                    backgroundColor: color + "26",
-                    borderWidth: 1.5,
-                    borderColor: color,
-                    alignItems: "center",
-                    justifyContent: "center",
-                    marginRight: 14,
-                  }}
-                >
-                  <Text style={{ color, fontSize: 20, fontWeight: "700" }}>
-                    {item.title.trim().charAt(0).toUpperCase()}
-                  </Text>
-                </View>
-
-                <View style={{ flex: 1 }}>
-                  <View style={{ flexDirection: "row", alignItems: "center" }}>
-                    <Text
-                      style={{ color: "#fff", fontSize: 16, fontWeight: "700", flex: 1 }}
-                      numberOfLines={1}
-                    >
-                      {item.title}
-                    </Text>
-                    <Text style={{ color: TEXT_MUTED, fontSize: 12, marginLeft: 8 }}>
-                      {formatTime(item.lastMessageAt)}
-                    </Text>
-                  </View>
-
-                  {item.description ? (
-                    <Text
-                      style={{ color: "#aeaeb2", fontSize: 13, marginTop: 2 }}
-                      numberOfLines={1}
-                    >
-                      {item.description}
-                    </Text>
-                  ) : null}
-
-                  <Text
-                    style={{
-                      color: item.lastMessage ? "#c7c7cc" : "#636366",
-                      fontSize: 13,
-                      marginTop: 4,
-                    }}
-                    numberOfLines={1}
-                  >
-                    {item.lastMessage ?? "Повідомлень поки немає"}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            );
-          }}
+          renderItem={({ item }) => (
+            <SwipeableRoomItem
+              room={item}
+              isCreator={item.creatorId === currentUser?._id}
+              onPress={() => router.push(`/chat/${item._id}`)}
+              onDelete={handleDeleteRoom}
+            />
+          )}
         />
       )}
     </View>
