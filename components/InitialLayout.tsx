@@ -1,36 +1,41 @@
 import { useEffect } from "react";
-import { useConvexAuth } from "@convex-dev/auth/react";
+import { useConvexAuth } from "convex/react";
 import * as SplashScreen from "expo-splash-screen";
-import { Stack, useRouter, useSegments } from "expo-router";
+import { Stack } from "expo-router";
 
 SplashScreen.preventAutoHideAsync();
 
 export default function InitialLayout() {
   const { isAuthenticated, isLoading } = useConvexAuth();
-  const segments = useSegments();
-  const router = useRouter();
 
   useEffect(() => {
-    if (isLoading) return;
-
-    const inAuthGroup = segments[0] === "(auth)";
-
-    if (isAuthenticated) {
-      if (inAuthGroup) {
-        router.replace("/(app)");
-      }
-    } else {
-      if (!inAuthGroup) {
-        router.replace("/(auth)/login");
-      }
+    if (!isLoading) {
+      SplashScreen.hideAsync();
     }
-
-    SplashScreen.hideAsync();
-  }, [isAuthenticated, isLoading, segments, router]);
+  }, [isLoading]);
 
   if (isLoading) {
     return null;
   }
 
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <Stack
+      key={isAuthenticated ? "signed-in" : "signed-out"}
+      screenOptions={{ headerShown: false }}
+    >
+      <Stack.Protected guard={isAuthenticated}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="(app)" />
+        <Stack.Screen name="explore" />
+        <Stack.Screen name="new-room" />
+        <Stack.Screen name="profile" />
+        <Stack.Screen name="chat/[id]" />
+        <Stack.Screen name="settings/[id]" />
+      </Stack.Protected>
+
+      <Stack.Protected guard={!isAuthenticated}>
+        <Stack.Screen name="(auth)" />
+      </Stack.Protected>
+    </Stack>
+  );
 }

@@ -5,6 +5,8 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { useState } from "react";
 import { useRouter, Stack } from "expo-router";
@@ -19,6 +21,8 @@ export default function NewRoomScreen() {
   const [description, setDescription] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const disabled = isLoading || !title.trim();
+
   const handleCreate = async () => {
     if (!title.trim()) {
       Alert.alert("Помилка", "Будь ласка, введіть назву кімнати.");
@@ -31,8 +35,7 @@ export default function NewRoomScreen() {
         title: title.trim(),
         description: description.trim() || undefined,
       });
-      
-      // Якщо є куди повертатися — повертаємося, інакше переходимо в чат
+
       if (router.canGoBack()) {
         router.back();
       }
@@ -46,78 +49,57 @@ export default function NewRoomScreen() {
   };
 
   return (
-    <View className="flex-1 bg-slate-50 p-6">
-      <Stack.Screen
-        options={{
-          title: "Нова кімната",
-          headerRight: () => (
-            <TouchableOpacity
-              onPress={handleCreate}
-              disabled={isLoading || !title.trim()}
-              className={`px-3 py-1.5 rounded-xl bg-blue-600 ${
-                isLoading || !title.trim() ? "opacity-50" : "active:bg-blue-700"
-              }`}
-            >
-              {isLoading ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <Text className="text-white text-sm font-bold">Створити</Text>
-              )}
-            </TouchableOpacity>
-          ),
-        }}
-      />
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      className="flex-1 bg-[#121212] items-center"
+    >
+      <Stack.Screen options={{ title: "Нова кімната" }} />
 
-      <View className="gap-5 mt-2">
-        <View>
-          <Text className="text-slate-700 text-xs font-semibold uppercase mb-2">
-            Назва кімнати *
-          </Text>
-          <TextInput
-            className="bg-white border border-slate-300 rounded-2xl px-4 py-3.5 text-slate-900 text-base shadow-sm"
-            placeholder="Наприклад: Обговорення React Native"
-            placeholderTextColor="#94a3b8"
-            value={title}
-            onChangeText={setTitle}
-            maxLength={100}
-            autoFocus
-          />
-        </View>
+      <View className="w-full max-w-md p-6">
+        <Text className="text-neutral-400 text-xs font-semibold uppercase mb-2 ml-1">
+          Назва кімнати *
+        </Text>
+        <TextInput
+          className="bg-[#1c1c1e] text-white px-4 py-3.5 rounded-2xl border border-[#2a2a2c] text-base mb-5"
+          placeholder="Наприклад: Обговорення React Native"
+          placeholderTextColor="#636366"
+          value={title}
+          onChangeText={setTitle}
+          maxLength={100}
+          autoFocus
+          selectionColor="#0a84ff"
+        />
 
-        <View>
-          <Text className="text-slate-700 text-xs font-semibold uppercase mb-2">
-            Опис (необов'язково)
-          </Text>
-          <TextInput
-            className="bg-white border border-slate-300 rounded-2xl px-4 py-3.5 text-slate-900 text-base min-h-[100px] shadow-sm"
-            placeholder="Короткий опис теми спілкування..."
-            placeholderTextColor="#94a3b8"
-            value={description}
-            onChangeText={setDescription}
-            multiline
-            numberOfLines={4}
-            maxLength={300}
-            textAlignVertical="top"
-          />
-        </View>
+        <Text className="text-neutral-400 text-xs font-semibold uppercase mb-2 ml-1">
+          Опис (необов'язково)
+        </Text>
+        <TextInput
+          className="bg-[#1c1c1e] text-white px-4 py-3.5 rounded-2xl border border-[#2a2a2c] text-base min-h-[100px] mb-6"
+          placeholder="Короткий опис теми спілкування..."
+          placeholderTextColor="#636366"
+          value={description}
+          onChangeText={setDescription}
+          multiline
+          numberOfLines={4}
+          maxLength={300}
+          textAlignVertical="top"
+          selectionColor="#0a84ff"
+        />
 
         <TouchableOpacity
           onPress={handleCreate}
-          disabled={isLoading || !title.trim()}
-          className={`bg-blue-600 py-4 rounded-2xl items-center justify-center shadow-md mt-2 ${
-            isLoading || !title.trim() ? "opacity-50" : "active:bg-blue-700"
-          }`}
+          disabled={disabled}
+          className="bg-[#0a84ff] py-4 rounded-2xl items-center justify-center"
+          style={{ opacity: disabled ? 0.5 : 1 }}
           activeOpacity={0.8}
         >
           {isLoading ? (
             <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
-            <Text className="text-white text-base font-bold">
-              Створити кімнату
-            </Text>
+            <Text className="text-white text-base font-bold">Створити кімнату</Text>
           )}
         </TouchableOpacity>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }

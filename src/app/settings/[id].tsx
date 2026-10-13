@@ -49,47 +49,49 @@ export default function RoomSettingsScreen() {
 
   if (!room) {
     return (
-      <View className="flex-1 bg-slate-50 justify-center items-center">
-        <ActivityIndicator size="large" color="#2563eb" />
+      <View className="flex-1 bg-[#121212] justify-center items-center">
+        <ActivityIndicator size="large" color="#0a84ff" />
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-slate-50 p-6">
-      <View className="bg-white border border-slate-200 rounded-2xl p-5 mb-6 shadow-sm">
-        <Text className="text-slate-500 text-xs font-semibold uppercase mb-1">
-          Назва
-        </Text>
-        <Text className="text-slate-900 text-xl font-bold">{room.title}</Text>
-
-        {room.description ? (
-          <>
-            <Text className="text-slate-500 text-xs font-semibold uppercase mt-4 mb-1">
-              Опис
-            </Text>
-            <Text className="text-slate-700 text-sm">{room.description}</Text>
-          </>
-        ) : null}
-      </View>
-
-      {isCreator && (
-        <TouchableOpacity
-          onPress={handleDelete}
-          className="bg-red-50 border border-red-200 rounded-2xl py-4 flex-row items-center justify-center active:bg-red-100"
-          activeOpacity={0.8}
-        >
-          <Ionicons
-            name="trash-outline"
-            size={20}
-            color="#dc2626"
-            style={{ marginRight: 8 }}
-          />
-          <Text className="text-red-600 text-base font-bold">
-            Видалити кімнату
+    <View className="flex-1 bg-[#121212] items-center">
+      <View className="w-full max-w-md p-6">
+        <View className="bg-[#1c1c1e] border border-[#2a2a2c] rounded-2xl p-5 mb-6">
+          <Text className="text-neutral-500 text-xs font-semibold uppercase mb-1">
+            Назва
           </Text>
-        </TouchableOpacity>
-      )}
+          <Text className="text-white text-xl font-bold">{room.title}</Text>
+
+          {room.description ? (
+            <>
+              <Text className="text-neutral-500 text-xs font-semibold uppercase mt-4 mb-1">
+                Опис
+              </Text>
+              <Text className="text-neutral-300 text-sm">{room.description}</Text>
+            </>
+          ) : null}
+        </View>
+
+        {isCreator && (
+          <TouchableOpacity
+            onPress={handleDelete}
+            className="bg-[#1c1c1e] border border-red-500/40 rounded-2xl py-4 flex-row items-center justify-center active:bg-red-500/10"
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name="trash-outline"
+              size={20}
+              color="#ef4444"
+              style={{ marginRight: 8 }}
+            />
+            <Text className="text-red-500 text-base font-bold">
+              Видалити кімнату
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 }

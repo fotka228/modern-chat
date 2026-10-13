@@ -1,5 +1,4 @@
 import "../global.css";
-
 import InitialLayout from "../../components/InitialLayout";
 import { ConvexAuthProvider } from "@convex-dev/auth/react";
 import { ConvexReactClient } from "convex/react";
