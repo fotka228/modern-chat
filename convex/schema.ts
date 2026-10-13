@@ -6,10 +6,22 @@ export default defineSchema({
   ...authTables,
 
   users: defineTable({
+    // Стандартні поля Convex Auth
     name: v.optional(v.string()),
     image: v.optional(v.string()),
     email: v.optional(v.string()),
-  }).index("by_email", ["email"]),
+    emailVerificationTime: v.optional(v.number()),
+    phone: v.optional(v.string()),
+    phoneVerificationTime: v.optional(v.number()),
+    isAnonymous: v.optional(v.boolean()),
+
+    // Власні поля профілю
+    username: v.optional(v.string()),
+    bio: v.optional(v.string()),
+    avatarStorageId: v.optional(v.id("_storage")),
+  })
+    .index("email", ["email"])
+    .index("phone", ["phone"]),
 
   chatRooms: defineTable({
     title: v.string(),
@@ -28,7 +40,11 @@ export default defineSchema({
     imageUrl: v.optional(v.string()),
     storageId: v.optional(v.id("_storage")),
     isEdited: v.optional(v.boolean()),
+    replyToId: v.optional(v.id("messages")),
+    replyToSender: v.optional(v.string()),
+    replyToText: v.optional(v.string()),
   }).index("by_chat_room", ["chatRoomId"]),
+
   typingIndicators: defineTable({
     chatRoomId: v.id("chatRooms"),
     userId: v.id("users"),

@@ -13,10 +13,16 @@ export const listMessages = query({
   },
 });
 
+/**
+ * Відправка текстового повідомлення з можливістю відповіді (reply)
+ */
 export const sendMessage = mutation({
   args: {
     chatRoomId: v.id("chatRooms"),
     content: v.string(),
+    replyToId: v.optional(v.id("messages")),
+    replyToSender: v.optional(v.string()),
+    replyToText: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -40,6 +46,9 @@ export const sendMessage = mutation({
       senderName: user.name ?? user.email ?? "Гравець",
       senderPhoto: user.image,
       content: trimmedContent,
+      replyToId: args.replyToId,
+      replyToSender: args.replyToSender,
+      replyToText: args.replyToText,
     });
 
     await ctx.db.patch(args.chatRoomId, {
@@ -52,7 +61,7 @@ export const sendMessage = mutation({
 });
 
 /**
- * Редагування тексту власного повідомлення[cite: 12]
+ * Редагування тексту власного повідомлення
  */
 export const editMessage = mutation({
   args: {
@@ -90,7 +99,7 @@ export const editMessage = mutation({
 });
 
 /**
- * Видалення власного повідомлення[cite: 12]
+ * Видалення власного повідомлення
  */
 export const deleteMessage = mutation({
   args: {
@@ -107,7 +116,7 @@ export const deleteMessage = mutation({
       throw new Error("Forbidden or not found: Повідомлення не знайдено або доступ заборонено");
     }
 
-    // Якщо до повідомлення був прикріплений файл — видаляємо його зі сховища[cite: 13]
+    // Якщо до повідомлення був прикріплений файл — видаляємо його зі сховища
     if (message.storageId) {
       await ctx.storage.delete(message.storageId);
     }
@@ -130,7 +139,7 @@ export const deleteMessage = mutation({
 });
 
 /**
- * Генерація URL для завантаження медіафайлів[cite: 13]
+ * Генерація URL для завантаження медіафайлів
  */
 export const generateUploadUrl = mutation(async (ctx) => {
   const userId = await getAuthUserId(ctx);
@@ -141,13 +150,16 @@ export const generateUploadUrl = mutation(async (ctx) => {
 });
 
 /**
- * Відправка повідомлення із зображенням[cite: 13]
+ * Відправка повідомлення із зображенням та можливістю відповіді (reply)
  */
 export const sendMediaMessage = mutation({
   args: {
     chatRoomId: v.id("chatRooms"),
     storageId: v.id("_storage"),
     content: v.optional(v.string()),
+    replyToId: v.optional(v.id("messages")),
+    replyToSender: v.optional(v.string()),
+    replyToText: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -175,6 +187,9 @@ export const sendMediaMessage = mutation({
       imageUrl,
       storageId: args.storageId,
       content: trimmedCaption,
+      replyToId: args.replyToId,
+      replyToSender: args.replyToSender,
+      replyToText: args.replyToText,
     });
 
     await ctx.db.patch(args.chatRoomId, {
