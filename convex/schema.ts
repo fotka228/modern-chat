@@ -1,35 +1,24 @@
+// convex/schema.ts
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-import { authTables } from "@convex-dev/auth/server";
 
 export default defineSchema({
-  ...authTables,
-
   users: defineTable({
-    // Стандартні поля Convex Auth
     name: v.optional(v.string()),
-    image: v.optional(v.string()),
     email: v.optional(v.string()),
-    emailVerificationTime: v.optional(v.number()),
-    phone: v.optional(v.string()),
-    phoneVerificationTime: v.optional(v.number()),
-    isAnonymous: v.optional(v.boolean()),
-
-    // Власні поля профілю
+    image: v.optional(v.string()),
     username: v.optional(v.string()),
     bio: v.optional(v.string()),
-    avatarStorageId: v.optional(v.id("_storage")),
-  })
-    .index("email", ["email"])
-    .index("phone", ["phone"]),
+    avatarStorageId: v.optional(v.id("_storage")), // 👈 Додано для проходження валідації існуючих даних юзерів
+  }),
 
   chatRooms: defineTable({
     title: v.string(),
     description: v.optional(v.string()),
-    creatorId: v.id("users"),
     lastMessage: v.optional(v.string()),
     lastMessageAt: v.optional(v.number()),
-  }).index("by_creator", ["creatorId"]),
+    creatorId: v.optional(v.id("users")),
+  }),
 
   messages: defineTable({
     chatRoomId: v.id("chatRooms"),
@@ -40,9 +29,22 @@ export default defineSchema({
     imageUrl: v.optional(v.string()),
     storageId: v.optional(v.id("_storage")),
     isEdited: v.optional(v.boolean()),
-    replyToId: v.optional(v.id("messages")),
+
+    // Поля цитування
+    replyToId: v.optional(v.string()),
     replyToSender: v.optional(v.string()),
     replyToText: v.optional(v.string()),
+
+    // Голосові повідомлення
+    audioUrl: v.optional(v.string()),
+    audioStorageId: v.optional(v.id("_storage")),
+    audioDuration: v.optional(v.number()),
+
+    // Відеокружечки
+    videoUrl: v.optional(v.string()),
+    videoStorageId: v.optional(v.id("_storage")),
+    videoDuration: v.optional(v.number()),
+    isVideoNote: v.optional(v.boolean()),
   }).index("by_chat_room", ["chatRoomId"]),
 
   typingIndicators: defineTable({
@@ -53,4 +55,13 @@ export default defineSchema({
   })
     .index("by_room", ["chatRoomId"])
     .index("by_user_and_room", ["userId", "chatRoomId"]),
+
+  messageReactions: defineTable({
+    messageId: v.id("messages"),
+    userId: v.id("users"),
+    emoji: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_message", ["messageId"])
+    .index("by_message_and_user", ["messageId", "userId"]),
 });
