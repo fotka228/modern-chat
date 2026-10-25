@@ -1,18 +1,25 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * Кольори застосунку. Вони збігаються з палітрою в tailwind.config.js,
+ * тож і Tailwind-класи, і useTheme() дають однаковий вигляд.
  */
 
-import '@/global.css';
 import { Platform } from 'react-native';
 
 export const Colors = {
   white: '#ffffff',
   black: '#000000',
+
+  // Основна палітра (iOS dark)
   surface: '#121212',
-  primary: '#007AFF',
-  textMuted: '#8E8E93',
-  danger: '#FF3B30',
+  card: '#1c1c1e',
+  border: '#2a2a2c',
+  primary: '#0a84ff',
+  accent: '#64d2ff',
+  success: '#30d158',
+  warning: '#ff9f0a',
+  danger: '#ff453a',
+  textMuted: '#8e8e93',
+  placeholder: '#636366',
 
   light: {
     text: '#000000',
@@ -23,10 +30,10 @@ export const Colors = {
   },
   dark: {
     text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    background: '#121212',
+    backgroundElement: '#1c1c1e',
+    backgroundSelected: '#2a2a2c',
+    textSecondary: '#a1a1a6',
   },
 } as const;
 

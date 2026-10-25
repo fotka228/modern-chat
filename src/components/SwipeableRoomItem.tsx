@@ -1,16 +1,13 @@
 import React from "react";
-import { View, Text, TouchableOpacity, Image } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { GestureDetector, Gesture } from "react-native-gesture-handler";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
-  runOnJS,
 } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import type { Id } from "../../convex/_generated/dataModel";
-
-// ==================== SWIPEABLE ROOM ITEM ====================
 
 const CARD_BG = "#1c1c1e";
 const BORDER = "#2a2a2c";
@@ -52,15 +49,18 @@ type RoomProps = {
 
 export function SwipeableRoomItem({ room, isCreator, onPress, onDelete }: RoomProps) {
   const translateX = useSharedValue(0);
+  const startX = useSharedValue(0);
   const color = colorFor(room.title);
 
   const pan = Gesture.Pan()
     .enabled(isCreator)
     .activeOffsetX([-15, 15])
-    .failOffsetY([-5, 5]) // Покращує вертикальний скрол списку
+    .failOffsetY([-5, 5])
+    .onBegin(() => {
+      startX.value = translateX.value;
+    })
     .onUpdate((e) => {
-      const start = translateX.value <= -ACTION_WIDTH + 1 ? -ACTION_WIDTH : 0;
-      const next = start + e.translationX;
+      const next = startX.value + e.translationX;
       translateX.value = Math.min(0, Math.max(next, -ACTION_WIDTH - 20));
     })
     .onEnd(() => {
@@ -74,6 +74,11 @@ export function SwipeableRoomItem({ room, isCreator, onPress, onDelete }: RoomPr
     transform: [{ translateX: translateX.value }],
   }));
 
+  // Червоний шар видно лише під час свайпу, щоб не було червоної облямівки по краях картки
+  const actionLayerStyle = useAnimatedStyle(() => ({
+    opacity: translateX.value < -1 ? 1 : 0,
+  }));
+
   const iconStyle = useAnimatedStyle(() => {
     const p = Math.min(Math.abs(translateX.value) / ACTION_WIDTH, 1);
     return { opacity: p, transform: [{ scale: 0.6 + 0.4 * p }] };
@@ -83,20 +88,25 @@ export function SwipeableRoomItem({ room, isCreator, onPress, onDelete }: RoomPr
     translateX.value = withSpring(0, SPRING);
   };
 
+  const hasMessage = !!room.lastMessage;
+
   return (
-    <View style={{ borderRadius: 18, overflow: "hidden" }}>
+    <View style={{ borderRadius: 20, overflow: "hidden" }}>
       {/* Нижній червоний шар */}
-      <View
-        style={{
-          position: "absolute",
-          top: 0,
-          bottom: 0,
-          left: 0,
-          right: 0,
-          backgroundColor: "#ff453a",
-          alignItems: "flex-end",
-          justifyContent: "center",
-        }}
+      <Animated.View
+        style={[
+          {
+            position: "absolute",
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            backgroundColor: "#ff453a",
+            alignItems: "flex-end",
+            justifyContent: "center",
+          },
+          actionLayerStyle,
+        ]}
       >
         <TouchableOpacity
           onPress={() => {
@@ -104,7 +114,12 @@ export function SwipeableRoomItem({ room, isCreator, onPress, onDelete }: RoomPr
             onDelete(room._id);
           }}
           activeOpacity={0.8}
-          style={{ width: ACTION_WIDTH, height: "100%", alignItems: "center", justifyContent: "center" }}
+          style={{
+            width: ACTION_WIDTH,
+            height: "100%",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
         >
           <Animated.View style={[{ alignItems: "center" }, iconStyle]}>
             <Ionicons name="trash-outline" size={24} color="#FFFFFF" />
@@ -113,43 +128,46 @@ export function SwipeableRoomItem({ room, isCreator, onPress, onDelete }: RoomPr
             </Text>
           </Animated.View>
         </TouchableOpacity>
-      </View>
+      </Animated.View>
 
       {/* Верхня картка */}
       <GestureDetector gesture={pan}>
         <Animated.View style={cardStyle}>
           <TouchableOpacity
             onPress={() => (translateX.value !== 0 ? close() : onPress())}
-            activeOpacity={0.9}
+            activeOpacity={0.85}
             style={{
               backgroundColor: CARD_BG,
               borderColor: BORDER,
               borderWidth: 1,
-              borderRadius: 18,
-              padding: 14,
+              borderRadius: 20,
+              paddingVertical: 14,
+              paddingHorizontal: 14,
               flexDirection: "row",
               alignItems: "center",
             }}
           >
+            {/* Аватар */}
             <View
               style={{
-                width: 52,
-                height: 52,
-                borderRadius: 26,
+                width: 54,
+                height: 54,
+                borderRadius: 18,
                 backgroundColor: color + "26",
                 borderWidth: 1.5,
-                borderColor: color,
+                borderColor: color + "99",
                 alignItems: "center",
                 justifyContent: "center",
                 marginRight: 14,
               }}
             >
-              <Text style={{ color, fontSize: 20, fontWeight: "700" }}>
+              <Text style={{ color, fontSize: 22, fontWeight: "800" }}>
                 {room.title.trim().charAt(0).toUpperCase()}
               </Text>
             </View>
 
             <View style={{ flex: 1 }}>
+              {/* Назва + час */}
               <View style={{ flexDirection: "row", alignItems: "center" }}>
                 <Text
                   style={{ color: "#fff", fontSize: 16, fontWeight: "700", flexShrink: 1 }}
@@ -161,13 +179,18 @@ export function SwipeableRoomItem({ room, isCreator, onPress, onDelete }: RoomPr
                   <View
                     style={{
                       marginLeft: 6,
+                      flexDirection: "row",
+                      alignItems: "center",
                       paddingHorizontal: 6,
                       paddingVertical: 2,
-                      borderRadius: 6,
-                      backgroundColor: "#0a84ff33",
+                      borderRadius: 8,
+                      backgroundColor: "#0a84ff26",
                     }}
                   >
-                    <Text style={{ color: "#0a84ff", fontSize: 10, fontWeight: "600" }}>
+                    <Ionicons name="star" size={9} color="#0a84ff" />
+                    <Text
+                      style={{ color: "#0a84ff", fontSize: 10, fontWeight: "700", marginLeft: 3 }}
+                    >
                       автор
                     </Text>
                   </View>
@@ -178,22 +201,36 @@ export function SwipeableRoomItem({ room, isCreator, onPress, onDelete }: RoomPr
                 </Text>
               </View>
 
+              {/* Опис */}
               {room.description ? (
-                <Text style={{ color: "#aeaeb2", fontSize: 13, marginTop: 2 }} numberOfLines={1}>
+                <Text
+                  style={{ color: TEXT_MUTED, fontSize: 12, marginTop: 2 }}
+                  numberOfLines={1}
+                >
                   {room.description}
                 </Text>
               ) : null}
 
-              <Text
-                style={{
-                  color: room.lastMessage ? "#c7c7cc" : "#636366",
-                  fontSize: 13,
-                  marginTop: 4,
-                }}
-                numberOfLines={1}
-              >
-                {room.lastMessage ?? "Повідомлень поки немає"}
-              </Text>
+              {/* Останнє повідомлення */}
+              <View style={{ flexDirection: "row", alignItems: "center", marginTop: 5 }}>
+                <Ionicons
+                  name={hasMessage ? "chatbubble-ellipses-outline" : "chatbubble-outline"}
+                  size={13}
+                  color={hasMessage ? "#aeaeb2" : "#48484a"}
+                  style={{ marginRight: 5 }}
+                />
+                <Text
+                  style={{
+                    flex: 1,
+                    color: hasMessage ? "#d1d1d6" : "#636366",
+                    fontSize: 13,
+                    fontStyle: hasMessage ? "normal" : "italic",
+                  }}
+                  numberOfLines={1}
+                >
+                  {room.lastMessage ?? "Повідомлень поки немає"}
+                </Text>
+              </View>
             </View>
           </TouchableOpacity>
         </Animated.View>

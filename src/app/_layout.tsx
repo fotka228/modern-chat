@@ -3,6 +3,7 @@ import InitialLayout from "../../components/InitialLayout";
 import { ConvexAuthProvider } from "@convex-dev/auth/react";
 import { ConvexReactClient } from "convex/react";
 import * as SecureStore from "expo-secure-store";
+import { StatusBar } from "expo-status-bar";
 import { Platform } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -19,7 +20,7 @@ const secureStorage = {
 
 export default function RootLayout() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: "#121212" }}>
       <SafeAreaProvider>
         <ConvexAuthProvider
           client={convex}
@@ -29,6 +30,7 @@ export default function RootLayout() {
               : undefined
           }
         >
+          <StatusBar style="light" />
           <InitialLayout />
         </ConvexAuthProvider>
       </SafeAreaProvider>

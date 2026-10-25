@@ -5,6 +5,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  Pressable,
   Image,
   ActivityIndicator,
   ScrollView,
@@ -27,8 +28,16 @@ type Props = {
   } | null | undefined;
 };
 
-const inputCls =
-  "bg-[#1c1c1e] border border-[#2a2a2c] rounded-xl px-4 py-3 text-white text-base";
+type FieldKey = "name" | "username" | "bio";
+
+function Label({ text, counter }: { text: string; counter?: string }) {
+  return (
+    <View className="flex-row items-center justify-between mb-1.5 mx-1">
+      <Text className="text-neutral-400 text-xs font-semibold uppercase">{text}</Text>
+      {counter ? <Text className="text-neutral-600 text-xs">{counter}</Text> : null}
+    </View>
+  );
+}
 
 export function EditProfileModal({ visible, onClose, currentUser }: Props) {
   const [name, setName] = useState("");
@@ -37,6 +46,7 @@ export function EditProfileModal({ visible, onClose, currentUser }: Props) {
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [focused, setFocused] = useState<FieldKey | null>(null);
 
   const updateUserProfile = useMutation(api.users.updateUserProfile);
   const generateAvatarUploadUrl = useMutation(api.users.generateAvatarUploadUrl);
@@ -101,86 +111,159 @@ export function EditProfileModal({ visible, onClose, currentUser }: Props) {
     }
   };
 
+  const borderFor = (k: FieldKey) => (focused === k ? "#0a84ff" : "#2a2a2c");
+  const iconFor = (k: FieldKey) => (focused === k ? "#0a84ff" : "#8e8e93");
+
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent
+      onRequestClose={onClose}
+      statusBarTranslucent
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
-        className="flex-1 justify-end items-center bg-black/70"
+        className="flex-1 justify-end items-center"
       >
-        <View className="w-full max-w-md bg-[#121212] rounded-t-3xl border-t border-[#2a2a2c] max-h-[90%] p-6">
+        {/* Затемнення: натискання закриває вікно */}
+        <Pressable
+          onPress={isSubmitting ? undefined : onClose}
+          style={{ position: "absolute", top: 0, bottom: 0, left: 0, right: 0, backgroundColor: "rgba(0,0,0,0.7)" }}
+        />
+
+        <View className="w-full max-w-md bg-[#121212] rounded-t-3xl border-t border-x border-[#2a2a2c] max-h-[92%] px-6 pt-3 pb-4">
+          {/* Ручка */}
+          <View className="self-center w-10 h-1 rounded-full bg-[#3a3a3c] mb-3" />
+
           <View className="flex-row items-center justify-between pb-4 border-b border-[#2a2a2c]">
-            <Text className="text-white text-lg font-bold">Редагувати профіль</Text>
-            <TouchableOpacity onPress={onClose} disabled={isSubmitting}>
-              <Ionicons name="close" size={24} color="#8e8e93" />
+            <Text className="text-white text-xl font-bold">Редагувати профіль</Text>
+            <TouchableOpacity
+              onPress={onClose}
+              disabled={isSubmitting}
+              hitSlop={10}
+              className="w-9 h-9 rounded-full bg-[#1c1c1e] items-center justify-center"
+              style={{ opacity: isSubmitting ? 0.4 : 1 }}
+            >
+              <Ionicons name="close" size={20} color="#8e8e93" />
             </TouchableOpacity>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} className="mt-4">
-            <View className="items-center my-4">
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            className="mt-2"
+          >
+            {/* Аватар */}
+            <View className="items-center my-5">
               <TouchableOpacity onPress={pickAvatar} disabled={isSubmitting} activeOpacity={0.8}>
-                <View className="w-24 h-24 rounded-full bg-[#1c1c1e] border-2 border-[#0a84ff] overflow-hidden items-center justify-center">
+                <View
+                  className="w-28 h-28 rounded-full bg-[#1c1c1e] border-[3px] border-[#0a84ff] overflow-hidden items-center justify-center"
+                  style={{
+                    shadowColor: "#0a84ff",
+                    shadowOpacity: 0.4,
+                    shadowRadius: 20,
+                    shadowOffset: { width: 0, height: 6 },
+                    elevation: 10,
+                  }}
+                >
                   {avatarUri ? (
                     <Image source={{ uri: avatarUri }} className="w-full h-full" resizeMode="cover" />
                   ) : (
-                    <Ionicons name="person" size={44} color="#0a84ff" />
+                    <Ionicons name="person" size={50} color="#0a84ff" />
                   )}
                 </View>
-                <View className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[#0a84ff] items-center justify-center border-2 border-[#121212]">
+                <View className="absolute bottom-0 right-0 w-9 h-9 rounded-full bg-[#0a84ff] items-center justify-center border-[3px] border-[#121212]">
                   <Ionicons name="camera" size={16} color="#FFFFFF" />
                 </View>
               </TouchableOpacity>
-              <Text className="text-[#0a84ff] text-xs font-semibold mt-2">Змінити фото</Text>
+              <Text className="text-[#0a84ff] text-sm font-semibold mt-3">Змінити фото</Text>
             </View>
 
-            <Text className="text-neutral-400 text-xs font-semibold uppercase mb-1.5 ml-1">
-              Ім'я *
-            </Text>
-            <TextInput
-              value={name}
-              onChangeText={setName}
-              placeholder="Ваше ім'я"
-              placeholderTextColor="#636366"
-              className={`${inputCls} mb-4`}
-            />
+            {/* Ім'я */}
+            <Label text="Ім'я *" counter={`${name.length}/50`} />
+            <View
+              className="flex-row items-center bg-[#1c1c1e] rounded-xl border px-3.5 mb-4"
+              style={{ borderColor: borderFor("name") }}
+            >
+              <Ionicons name="person-outline" size={20} color={iconFor("name")} />
+              <TextInput
+                value={name}
+                onChangeText={setName}
+                onFocus={() => setFocused("name")}
+                onBlur={() => setFocused(null)}
+                placeholder="Ваше ім'я"
+                placeholderTextColor="#636366"
+                maxLength={50}
+                selectionColor="#0a84ff"
+                className="flex-1 text-white text-base py-3.5 px-3"
+              />
+            </View>
 
-            <Text className="text-neutral-400 text-xs font-semibold uppercase mb-1.5 ml-1">
-              Нікнейм
-            </Text>
-            <TextInput
-              value={username}
-              onChangeText={setUsername}
-              placeholder="alex_dev"
-              placeholderTextColor="#636366"
-              autoCapitalize="none"
-              className={`${inputCls} mb-4`}
-            />
+            {/* Нікнейм */}
+            <Label text="Нікнейм" />
+            <View
+              className="flex-row items-center bg-[#1c1c1e] rounded-xl border px-3.5 mb-4"
+              style={{ borderColor: borderFor("username") }}
+            >
+              <Ionicons name="at" size={20} color={iconFor("username")} />
+              <TextInput
+                value={username}
+                onChangeText={setUsername}
+                onFocus={() => setFocused("username")}
+                onBlur={() => setFocused(null)}
+                placeholder="alex_dev"
+                placeholderTextColor="#636366"
+                autoCapitalize="none"
+                autoCorrect={false}
+                selectionColor="#0a84ff"
+                className="flex-1 text-white text-base py-3.5 px-3"
+              />
+            </View>
 
-            <Text className="text-neutral-400 text-xs font-semibold uppercase mb-1.5 ml-1">
-              Про себе
-            </Text>
-            <TextInput
-              value={bio}
-              onChangeText={setBio}
-              placeholder="Кілька слів про себе"
-              placeholderTextColor="#636366"
-              multiline
-              numberOfLines={3}
-              textAlignVertical="top"
-              className={`${inputCls} min-h-[80px] mb-5`}
-            />
+            {/* Про себе */}
+            <Label text="Про себе" counter={`${bio.length}/150`} />
+            <View
+              className="bg-[#1c1c1e] rounded-xl border px-4 mb-5"
+              style={{ borderColor: borderFor("bio") }}
+            >
+              <TextInput
+                value={bio}
+                onChangeText={setBio}
+                onFocus={() => setFocused("bio")}
+                onBlur={() => setFocused(null)}
+                placeholder="Кілька слів про себе"
+                placeholderTextColor="#636366"
+                multiline
+                numberOfLines={3}
+                maxLength={150}
+                textAlignVertical="top"
+                selectionColor="#0a84ff"
+                className="text-white text-base py-3.5 min-h-[90px]"
+              />
+            </View>
 
-            {error ? <Text className="text-red-500 text-sm mb-3">{error}</Text> : null}
+            {error ? (
+              <View className="flex-row items-center bg-[#ff453a]/10 rounded-xl px-3 py-2.5 mb-4">
+                <Ionicons name="alert-circle" size={18} color="#ff453a" />
+                <Text className="text-red-500 text-sm ml-2 flex-1">{error}</Text>
+              </View>
+            ) : null}
 
             <TouchableOpacity
               onPress={handleSave}
               disabled={isSubmitting}
-              className="bg-[#0a84ff] rounded-xl py-3.5 items-center mb-6"
+              activeOpacity={0.8}
+              className="bg-[#0a84ff] rounded-xl py-4 flex-row items-center justify-center mb-4"
               style={{ opacity: isSubmitting ? 0.6 : 1 }}
             >
               {isSubmitting ? (
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
-                <Text className="text-white font-bold text-base">Зберегти</Text>
+                <>
+                  <Ionicons name="checkmark" size={20} color="#fff" />
+                  <Text className="text-white font-bold text-base ml-2">Зберегти</Text>
+                </>
               )}
             </TouchableOpacity>
           </ScrollView>

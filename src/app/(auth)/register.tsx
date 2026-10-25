@@ -29,20 +29,44 @@ function getStrength(p: string) {
 function Field({
   icon,
   right,
+  borderOverride,
   ...props
 }: React.ComponentProps<typeof TextInput> & {
   icon: keyof typeof Ionicons.glyphMap;
   right?: React.ReactNode;
+  borderOverride?: string;
 }) {
+  const [focused, setFocused] = useState(false);
+  const borderColor = borderOverride ?? (focused ? "#0a84ff" : "#2a2a2c");
   return (
-    <View className="flex-row items-center bg-[#1c1c1e] rounded-xl border border-[#2a2a2c] px-3.5 mb-4">
-      <Ionicons name={icon} size={20} color="#8e8e93" />
+    <View
+      className="flex-row items-center bg-[#1c1c1e] rounded-xl border px-3.5 mb-4"
+      style={{ borderColor }}
+    >
+      <Ionicons name={icon} size={20} color={focused ? "#0a84ff" : "#8e8e93"} />
       <TextInput
         className="flex-1 text-white py-3.5 px-3"
         placeholderTextColor="#636366"
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
         {...props}
       />
       {right}
+    </View>
+  );
+}
+
+function Rule({ ok, text }: { ok: boolean; text: string }) {
+  return (
+    <View className="flex-row items-center mr-4 mb-1">
+      <Ionicons
+        name={ok ? "checkmark-circle" : "ellipse-outline"}
+        size={14}
+        color={ok ? "#30d158" : "#636366"}
+      />
+      <Text className="text-xs ml-1.5" style={{ color: ok ? "#30d158" : "#8e8e93" }}>
+        {text}
+      </Text>
     </View>
   );
 }
@@ -108,19 +132,38 @@ export default function RegisterScreen() {
         <View className="w-full max-w-md self-center px-6 pt-14 pb-8">
           <TouchableOpacity
             onPress={() => (router.canGoBack() ? router.back() : router.replace("/login"))}
-            className="w-10 h-10 rounded-full bg-[#1c1c1e] items-center justify-center mb-6"
+            className="w-10 h-10 rounded-full bg-[#1c1c1e] border border-[#2a2a2c] items-center justify-center mb-6"
           >
             <Ionicons name="arrow-back" size={22} color="#fff" />
           </TouchableOpacity>
 
-          <Text className="text-white text-3xl font-bold">Приєднуйтесь 👋</Text>
-          <Text className="text-neutral-400 text-base mt-2 mb-8">
-            Створіть акаунт, щоб почати спілкування
-          </Text>
+          {/* Шапка */}
+          <View className="flex-row items-center mb-8">
+            <View
+              className="w-16 h-16 rounded-2xl bg-[#1c1c1e] border border-[#2a2a2c] items-center justify-center mr-4"
+              style={{
+                shadowColor: "#0a84ff",
+                shadowOpacity: 0.35,
+                shadowRadius: 20,
+                shadowOffset: { width: 0, height: 6 },
+                elevation: 8,
+              }}
+            >
+              <Ionicons name="person-add" size={28} color="#0a84ff" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-white text-3xl font-bold">Приєднуйтесь 👋</Text>
+              <Text className="text-neutral-400 text-sm mt-1">
+                Створіть акаунт, щоб почати спілкування
+              </Text>
+            </View>
+          </View>
 
           <Field
             icon="person-outline"
             placeholder="Ваше ім'я"
+            autoCapitalize="words"
+            autoComplete="name"
             value={name}
             onChangeText={setName}
           />
@@ -128,6 +171,8 @@ export default function RegisterScreen() {
             icon="mail-outline"
             placeholder="Email"
             autoCapitalize="none"
+            autoCorrect={false}
+            autoComplete="email"
             keyboardType="email-address"
             value={email}
             onChangeText={setEmail}
@@ -136,6 +181,7 @@ export default function RegisterScreen() {
             icon="lock-closed-outline"
             placeholder="Пароль"
             secureTextEntry={!showPass}
+            autoCapitalize="none"
             value={password}
             onChangeText={setPassword}
             right={
@@ -163,9 +209,18 @@ export default function RegisterScreen() {
                   />
                 ))}
               </View>
-              <Text className="text-xs mt-1.5" style={{ color: STRENGTH_COLORS[strength] }}>
+              <Text
+                className="text-xs mt-1.5 mb-2 font-medium"
+                style={{ color: STRENGTH_COLORS[strength] }}
+              >
                 {STRENGTH_LABELS[strength]}
               </Text>
+              <View className="flex-row flex-wrap">
+                <Rule ok={password.length >= 8} text="8+ символів" />
+                <Rule ok={/[a-z]/.test(password) && /[A-Z]/.test(password)} text="Aa" />
+                <Rule ok={/\d/.test(password)} text="Цифра" />
+                <Rule ok={/[^A-Za-z0-9]/.test(password)} text="Символ" />
+              </View>
             </View>
           )}
 
@@ -173,10 +228,11 @@ export default function RegisterScreen() {
             icon="shield-checkmark-outline"
             placeholder="Підтвердіть пароль"
             secureTextEntry={!showPass}
+            autoCapitalize="none"
             value={confirm}
             onChangeText={setConfirm}
             onSubmitEditing={handleSubmit}
-            style={{ color: "#fff" }}
+            borderOverride={mismatch ? "#ff453a" : undefined}
             right={
               confirm.length > 0 ? (
                 <Ionicons
@@ -198,8 +254,9 @@ export default function RegisterScreen() {
           <TouchableOpacity
             onPress={handleSubmit}
             disabled={loading}
-            className="bg-[#0a84ff] rounded-xl py-4 flex-row items-center justify-center"
+            className="bg-[#0a84ff] rounded-xl py-4 flex-row items-center justify-center mt-1"
             activeOpacity={0.8}
+            style={{ opacity: loading ? 0.7 : 1 }}
           >
             {loading ? (
               <ActivityIndicator color="#FFFFFF" />
@@ -215,11 +272,19 @@ export default function RegisterScreen() {
             Реєструючись, ви погоджуєтесь з умовами використання
           </Text>
 
+          {/* Роздільник */}
+          <View className="flex-row items-center my-6">
+            <View className="flex-1 h-px bg-[#2a2a2c]" />
+            <Text className="text-neutral-500 text-xs mx-3">або</Text>
+            <View className="flex-1 h-px bg-[#2a2a2c]" />
+          </View>
+
           <TouchableOpacity
             onPress={() => router.replace("/login")}
-            className="mt-6 items-center"
+            className="border border-[#2a2a2c] bg-[#1c1c1e] rounded-xl py-4 items-center"
+            activeOpacity={0.8}
           >
-            <Text className="text-neutral-400 text-sm">
+            <Text className="text-neutral-300 text-base">
               Вже є акаунт? <Text className="text-[#0a84ff] font-semibold">Увійти</Text>
             </Text>
           </TouchableOpacity>

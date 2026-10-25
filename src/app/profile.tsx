@@ -16,6 +16,67 @@ import { api } from "../../convex/_generated/api";
 import { Ionicons } from "@expo/vector-icons";
 import { EditProfileModal } from "../components/EditProfileModal";
 
+function StatCard({
+  icon,
+  color,
+  value,
+  label,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  color: string;
+  value: number;
+  label: string;
+}) {
+  return (
+    <View className="flex-1 bg-[#1c1c1e] border border-[#2a2a2c] rounded-2xl p-4 items-center">
+      <View
+        className="w-11 h-11 rounded-full items-center justify-center mb-2"
+        style={{ backgroundColor: color + "26" }}
+      >
+        <Ionicons name={icon} size={22} color={color} />
+      </View>
+      <Text className="text-white text-2xl font-bold">{value}</Text>
+      <Text className="text-neutral-400 text-xs mt-0.5">{label}</Text>
+    </View>
+  );
+}
+
+function MenuRow({
+  icon,
+  label,
+  onPress,
+  color = "#0a84ff",
+  danger = false,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  onPress: () => void;
+  color?: string;
+  danger?: boolean;
+}) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.7}
+      className="flex-row items-center px-4 py-3.5"
+    >
+      <View
+        className="w-9 h-9 rounded-xl items-center justify-center mr-3"
+        style={{ backgroundColor: (danger ? "#ff453a" : color) + "26" }}
+      >
+        <Ionicons name={icon} size={20} color={danger ? "#ff453a" : color} />
+      </View>
+      <Text
+        className="flex-1 text-base font-medium"
+        style={{ color: danger ? "#ff453a" : "#fff" }}
+      >
+        {label}
+      </Text>
+      {!danger && <Ionicons name="chevron-forward" size={18} color="#636366" />}
+    </TouchableOpacity>
+  );
+}
+
 export default function ProfileScreen() {
   const router = useRouter();
   const { signOut } = useAuthActions();
@@ -64,20 +125,29 @@ export default function ProfileScreen() {
     <ScrollView
       className="flex-1 bg-[#121212]"
       contentContainerStyle={{ alignItems: "center" }}
+      showsVerticalScrollIndicator={false}
     >
-      <View className="w-full max-w-md p-6">
+      <View className="w-full max-w-md px-6 pt-6 pb-10">
         <TouchableOpacity
           onPress={handleBack}
-          className="flex-row items-center mb-6 self-start bg-[#1c1c1e] border border-[#2a2a2c] px-3 py-2 rounded-full"
+          className="w-10 h-10 rounded-full bg-[#1c1c1e] border border-[#2a2a2c] items-center justify-center mb-4"
           activeOpacity={0.7}
         >
-          <Ionicons name="arrow-back" size={18} color="#FFFFFF" />
-          <Text className="text-white font-semibold ml-2 text-sm">Назад</Text>
+          <Ionicons name="arrow-back" size={22} color="#FFFFFF" />
         </TouchableOpacity>
 
         {/* Шапка профілю */}
-        <View className="items-center mb-6">
-          <View className="w-28 h-28 rounded-full bg-[#1c1c1e] border-4 border-[#0a84ff]/40 overflow-hidden items-center justify-center mb-3">
+        <View className="items-center mb-8">
+          <View
+            className="w-32 h-32 rounded-full bg-[#1c1c1e] border-[3px] border-[#0a84ff] overflow-hidden items-center justify-center mb-4"
+            style={{
+              shadowColor: "#0a84ff",
+              shadowOpacity: 0.45,
+              shadowRadius: 24,
+              shadowOffset: { width: 0, height: 8 },
+              elevation: 12,
+            }}
+          >
             {currentUser?.image ? (
               <Image
                 source={{ uri: currentUser.image }}
@@ -85,70 +155,70 @@ export default function ProfileScreen() {
                 resizeMode="cover"
               />
             ) : (
-              <Ionicons name="person" size={52} color="#0a84ff" />
+              <Ionicons name="person" size={58} color="#0a84ff" />
             )}
           </View>
 
-          <Text className="text-white text-2xl font-bold">
+          <Text className="text-white text-3xl font-bold text-center">
             {currentUser?.name || "Користувач"}
           </Text>
 
           {currentUser?.username ? (
-            <Text className="text-[#0a84ff] text-sm font-semibold mt-0.5">
-              @{currentUser.username}
-            </Text>
+            <View className="bg-[#0a84ff]/15 px-3 py-1 rounded-full mt-2">
+              <Text className="text-[#0a84ff] text-sm font-semibold">
+                @{currentUser.username}
+              </Text>
+            </View>
           ) : null}
 
           {currentUser?.email ? (
-            <Text className="text-neutral-400 text-xs mt-1">{currentUser.email}</Text>
+            <View className="flex-row items-center mt-2">
+              <Ionicons name="mail-outline" size={14} color="#8e8e93" />
+              <Text className="text-neutral-400 text-sm ml-1.5">{currentUser.email}</Text>
+            </View>
           ) : null}
 
           {currentUser?.bio ? (
-            <View className="mt-3 px-4 py-2 bg-[#1c1c1e] rounded-xl border border-[#2a2a2c] max-w-[90%]">
-              <Text className="text-neutral-200 text-sm text-center italic">
+            <View className="mt-4 px-4 py-3 bg-[#1c1c1e] rounded-2xl border border-[#2a2a2c] w-full">
+              <Text className="text-neutral-200 text-sm text-center leading-5">
                 {currentUser.bio}
               </Text>
             </View>
           ) : null}
         </View>
 
-        {/* Статистика активності */}
+        {/* Статистика */}
         <View className="flex-row gap-3 mb-6">
-          <View className="flex-1 bg-[#1c1c1e] border border-[#2a2a2c] rounded-2xl p-4 items-center">
-            <Ionicons name="chatbubble-ellipses" size={22} color="#0a84ff" />
-            <Text className="text-white text-xl font-bold mt-2">
-              {details?.stats.messagesCount ?? 0}
-            </Text>
-            <Text className="text-neutral-400 text-xs mt-0.5">Повідомлень</Text>
-          </View>
-
-          <View className="flex-1 bg-[#1c1c1e] border border-[#2a2a2c] rounded-2xl p-4 items-center">
-            <Ionicons name="folder" size={22} color="#bf5af2" />
-            <Text className="text-white text-xl font-bold mt-2">
-              {details?.stats.roomsCreatedCount ?? 0}
-            </Text>
-            <Text className="text-neutral-400 text-xs mt-0.5">Створено кімнат</Text>
-          </View>
+          <StatCard
+            icon="chatbubble-ellipses"
+            color="#0a84ff"
+            value={details?.stats.messagesCount ?? 0}
+            label="Повідомлень"
+          />
+          <StatCard
+            icon="folder"
+            color="#bf5af2"
+            value={details?.stats.roomsCreatedCount ?? 0}
+            label="Створено кімнат"
+          />
         </View>
 
-        {/* Дії з акаунтом */}
-        <TouchableOpacity
-          onPress={() => setEditOpen(true)}
-          className="flex-row items-center justify-center bg-[#0a84ff] rounded-2xl py-4 mb-3"
-          activeOpacity={0.8}
-        >
-          <Ionicons name="create-outline" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
-          <Text className="text-white font-bold text-base">Редагувати профіль</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={handleSignOut}
-          className="bg-[#1c1c1e] border border-red-500/40 rounded-2xl py-4 flex-row items-center justify-center"
-          activeOpacity={0.8}
-        >
-          <Ionicons name="log-out-outline" size={20} color="#ef4444" style={{ marginRight: 8 }} />
-          <Text className="text-red-500 font-bold text-base">Вийти з акаунту</Text>
-        </TouchableOpacity>
+        {/* Меню */}
+        <Text className="text-neutral-500 text-xs font-semibold uppercase mb-2 ml-1">Акаунт</Text>
+        <View className="bg-[#1c1c1e] border border-[#2a2a2c] rounded-2xl overflow-hidden">
+          <MenuRow
+            icon="create-outline"
+            label="Редагувати профіль"
+            onPress={() => setEditOpen(true)}
+          />
+          <View className="h-px bg-[#2a2a2c] ml-16" />
+          <MenuRow
+            icon="log-out-outline"
+            label="Вийти з акаунту"
+            onPress={handleSignOut}
+            danger
+          />
+        </View>
       </View>
 
       <EditProfileModal

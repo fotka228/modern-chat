@@ -1,1 +1,5 @@
-export { useColorScheme } from 'react-native';
+export type AppColorScheme = "dark";
+
+export function useColorScheme(): AppColorScheme {
+  return "dark";
+}

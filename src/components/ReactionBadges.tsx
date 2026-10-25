@@ -13,17 +13,26 @@ export function ReactionBadges({ messageId }: Props) {
   if (!reactions || reactions.length === 0) return null;
 
   return (
-    <View className="flex-row flex-wrap gap-1 mt-1">
+    <View className="flex-row flex-wrap gap-1.5 mt-1">
       {reactions.map((r) => (
         <TouchableOpacity
           key={r.emoji}
           onPress={() => toggleReaction({ messageId, emoji: r.emoji })}
-          className={`flex-row items-center px-2 py-0.5 rounded-full border ${
-            r.hasReacted ? "bg-blue-100 border-blue-500" : "bg-white border-slate-200"
+          activeOpacity={0.7}
+          className={`flex-row items-center px-2.5 py-1 rounded-full border ${
+            r.hasReacted
+              ? "bg-[#0a84ff]/20 border-[#0a84ff]"
+              : "bg-[#1c1c1e] border-[#2a2a2c]"
           }`}
         >
-          <Text className="text-xs">{r.emoji}</Text>
-          <Text className="text-xs font-bold ml-1 text-slate-700">{r.count}</Text>
+          <Text className="text-sm">{r.emoji}</Text>
+          <Text
+            className={`text-xs font-bold ml-1.5 ${
+              r.hasReacted ? "text-[#0a84ff]" : "text-neutral-400"
+            }`}
+          >
+            {r.count}
+          </Text>
         </TouchableOpacity>
       ))}
     </View>

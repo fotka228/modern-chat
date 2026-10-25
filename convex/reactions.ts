@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { internal } from "./_generated/api";
 
 export const toggleReaction = mutation({
   args: {
@@ -21,14 +22,37 @@ export const toggleReaction = mutation({
 
     if (existing) {
       await ctx.db.delete(existing._id);
-    } else {
-      await ctx.db.insert("messageReactions", {
-        messageId: args.messageId,
-        userId,
-        emoji: args.emoji,
-        createdAt: Date.now(),
-      });
+      return;
     }
+
+    await ctx.db.insert("messageReactions", {
+      messageId: args.messageId,
+      userId,
+      emoji: args.emoji,
+      createdAt: Date.now(),
+    });
+
+    // Пуш автору повідомлення (якщо реакцію поставив хтось інший)
+    const message = await ctx.db.get(args.messageId);
+    if (!message || message.senderId === userId) return;
+
+    const author = await ctx.db.get(message.senderId);
+    if (!author?.pushToken) return;
+
+    const reactor = await ctx.db.get(userId);
+    const room = await ctx.db.get(message.chatRoomId);
+    const reactorName = reactor?.name ?? reactor?.email ?? "Співрозмовник";
+
+    await ctx.scheduler.runAfter(0, internal.pushNotifications.sendPushNotification, {
+      pushToken: author.pushToken,
+      title: `Нова реакція ${args.emoji}`,
+      body: `${reactorName} відреагував(ла) ${args.emoji} на ваше повідомлення у "${room?.title ?? "чаті"}"`,
+      data: {
+        type: "reaction",
+        roomId: message.chatRoomId,
+        messageId: message._id,
+      },
+    });
   },
 });
 

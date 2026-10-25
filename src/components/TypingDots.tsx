@@ -1,4 +1,3 @@
-// components/TypingDots.tsx
 import { View, Text, Animated } from "react-native";
 import { useEffect, useRef } from "react";
 
@@ -13,27 +12,22 @@ export function TypingDots({ typingUsers }: Props) {
 
   useEffect(() => {
     const animateDot = (dot: Animated.Value, delay: number) =>
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(dot, { toValue: -4, duration: 300, delay, useNativeDriver: true }),
-          Animated.timing(dot, { toValue: 0, duration: 300, useNativeDriver: true }),
-        ])
-      );
+      Animated.sequence([
+        Animated.delay(delay),
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(dot, { toValue: -4, duration: 300, useNativeDriver: true }),
+            Animated.timing(dot, { toValue: 0, duration: 300, useNativeDriver: true }),
+            Animated.delay(300),
+          ])
+        ),
+      ]);
 
-    const anim1 = animateDot(dot1, 0);
-    const anim2 = animateDot(dot2, 150);
-    const anim3 = animateDot(dot3, 300);
+    const anims = [animateDot(dot1, 0), animateDot(dot2, 150), animateDot(dot3, 300)];
+    anims.forEach((a) => a.start());
 
-    anim1.start();
-    anim2.start();
-    anim3.start();
-
-    return () => {
-      anim1.stop();
-      anim2.stop();
-      anim3.stop();
-    };
-  }, []);
+    return () => anims.forEach((a) => a.stop());
+  }, [dot1, dot2, dot3]);
 
   if (typingUsers.length === 0) return null;
 
@@ -43,21 +37,20 @@ export function TypingDots({ typingUsers }: Props) {
       : `${typingUsers.join(", ")} друкують`;
 
   return (
-    <View className="flex-row items-center px-4 py-1.5 bg-[#121212]">
-      <Text className="text-neutral-400 text-xs mr-2">{text}</Text>
-      <View className="flex-row items-center gap-1">
-        <Animated.View
-          className="w-1.5 h-1.5 rounded-full bg-[#0a84ff]"
-          style={{ transform: [{ translateY: dot1 }] }}
-        />
-        <Animated.View
-          className="w-1.5 h-1.5 rounded-full bg-[#0a84ff]"
-          style={{ transform: [{ translateY: dot2 }] }}
-        />
-        <Animated.View
-          className="w-1.5 h-1.5 rounded-full bg-[#0a84ff]"
-          style={{ transform: [{ translateY: dot3 }] }}
-        />
+    <View className="px-4 py-1.5 bg-[#121212] items-start">
+      <View className="flex-row items-center bg-[#1c1c1e] border border-[#2a2a2c] rounded-full pl-3 pr-3.5 py-1.5">
+        <View className="flex-row items-center gap-1 mr-2">
+          {[dot1, dot2, dot3].map((dot, i) => (
+            <Animated.View
+              key={i}
+              className="w-1.5 h-1.5 rounded-full bg-[#0a84ff]"
+              style={{ transform: [{ translateY: dot }] }}
+            />
+          ))}
+        </View>
+        <Text className="text-neutral-400 text-xs" numberOfLines={1}>
+          {text}
+        </Text>
       </View>
     </View>
   );
